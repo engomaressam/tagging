@@ -97,7 +97,7 @@ def convert_library():
     # Create the destination directory if it doesn't exist
     os.makedirs(mp3_dir, exist_ok=True)
 
-    # Dictionary to store conversion tasks by album
+    # Conversion tasks per album folder, keyed by its path relative to the source (two albums can share a folder name)
     conversion_tasks = {}
     error_files = []
     current_album = None
@@ -135,13 +135,13 @@ def convert_library():
                 # Add the conversion task to our list
                 album_tasks.append((flac_path, mp3_path, album_name))
             
-            conversion_tasks[album_name] = album_tasks
+            conversion_tasks[rel_path] = album_tasks
 
     # Convert files using a thread pool
     print("\nStarting conversion process...")
     with ThreadPoolExecutor() as executor:
         # Process each album's files
-        for album_name, tasks in conversion_tasks.items():
+        for rel_path, tasks in conversion_tasks.items():
             # Submit all conversion tasks for this album
             futures = [
                 executor.submit(convert_flac_to_mp3, flac_path, mp3_path, album)

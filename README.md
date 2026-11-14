@@ -1,67 +1,59 @@
-# Audio File Tagger and Converter
+# tagging: FLAC tagger and FLAC-to-MP3 converter
 
-This repository contains Python scripts for managing audio file metadata and converting between audio formats. The scripts are designed to work with FLAC and MP3 files, allowing you to tag audio files and convert between formats while preserving metadata.
+Two small Python tools for a music library kept as one folder per album:
 
-## Features
+- **`flac_tagger.py`** sets the album tag and genre on every FLAC file and embeds the album's cover art.
+- **`flac_to_mp3.py`** converts a whole FLAC library to 320 kbps MP3. It keeps the tags and cover art and mirrors the
+  folder structure.
 
-- **FLAC Tagger**: Update metadata (tags) for FLAC audio files
-- **FLAC to MP3 Converter**: Convert FLAC files to MP3 format while preserving metadata
-- **Batch Processing**: Process multiple files in a directory
-- **Metadata Preservation**: Maintains ID3 tags during conversion
+Both open a folder picker (Tkinter), so they take no command-line arguments.
 
-## Requirements
+## Expected layout
 
-- Python 3.6+
-- Required Python packages (install using `pip install -r requirements.txt`):
-  - mutagen
-  - pydub
-  - tqdm
-
-## Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/engomaressam/tagging.git
-   cd tagging
-   ```
-
-2. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Usage
-
-### FLAC Tagger
-
-```bash
-python flac_tagger.py /path/to/audio/files
+```
+Music/
+├── Artist A/
+│   └── Album One/
+│       ├── 01 - First Track.flac
+│       ├── 02 - Second Track.flac
+│       └── coverart.jpg        # optional
+└── Artist B/
+    └── Album Two/
+        └── ...
 ```
 
-### FLAC to MP3 Converter
+## flac_tagger.py
+
+1. Pick the top folder. Every subfolder that holds `.flac` files is treated as one album.
+2. Enter one genre. It is applied to all albums in that run.
+3. For each FLAC file it sets `album` to the folder's name and `genre` to your genre. If `coverart.jpg` is in the
+   folder, it replaces the embedded pictures with it as the front cover, converting RGBA images to RGB JPEG first.
+
+It edits the files in place (with [mutagen](https://mutagen.readthedocs.io/)), so try it on a copy first.
+
+## flac_to_mp3.py
+
+1. Pick the source FLAC folder, then the destination folder.
+2. It walks the source tree and recreates each album folder under the destination. It copies `coverart.jpg` and
+   converts every track with ffmpeg in parallel (a thread pool):
+   `ffmpeg -i in.flac -ab 320k -map_metadata 0 -id3v2_version 3 out.mp3`.
+3. It checks every output file, deletes empty or partial ones, and lists the failed tracks album by album at the end.
+
+## Setup
 
 ```bash
-python flac_to_mp3.py /path/to/flac/files /output/directory
+git clone https://github.com/engomaressam/tagging.git
+cd tagging
+pip install -r requirements.txt
 ```
 
-## Scripts
+`flac_to_mp3.py` also needs [ffmpeg](https://ffmpeg.org/download.html) on the PATH.
 
-### flac_tagger.py
-
-A script to update metadata (tags) for FLAC audio files. It can process a single file or all FLAC files in a directory.
-
-### flac_to_mp3.py
-
-A script to convert FLAC audio files to MP3 format while preserving metadata. It can process a single file or all FLAC files in a directory.
+```bash
+python flac_tagger.py
+python flac_to_mp3.py
+```
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Author
-
-Omar Essam
+MIT, see [LICENSE](LICENSE).
